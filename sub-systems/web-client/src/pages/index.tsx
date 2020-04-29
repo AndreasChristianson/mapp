@@ -9,7 +9,7 @@ interface props {
 const Index: NextPage<props> = ({ userAgent }) => (
   <>
     <Head>
-      <title>websocket poc</title>
+      <title>MAPP</title>
     </Head>
     <p>{'Hello World'}</p>
     <p>{userAgent}</p>
