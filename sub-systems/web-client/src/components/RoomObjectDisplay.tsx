@@ -1,81 +1,78 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RoomObject } from '../../../types/types';
-import { useRouter } from 'next/router';
-import Draggable, { DraggableEvent } from 'react-draggable';
+import { useRouter } from 'next/router'
 import { put } from '../utils/fetch-helpers';
+import { useDrag, DragSourceMonitor} from 'react-dnd';
+import { transformPosition, addPositions, negatePosition } from '../utils/svg-helpers';
+import { RoomObjectImage } from './RoomObjectImage';
 
 type Props = {
   roomObject: RoomObject;
-  scale: number;
-  translateClientPosition: (x: number, y: number) => { x: number; y: number };
+  generateMatrix: () => DOMMatrix;
 };
 
 const RoomObjectDisplay = ({
   roomObject,
-  scale,
-  translateClientPosition,
+  generateMatrix,
 }: Props) => {
   const router = useRouter();
-  const editRoomObject = () => {
-    router.push(`/room/${roomObject.roomId}/room-object/${roomObject.id}`);
-  };
   const updateRoomObject = (roomObject: RoomObject) =>
     put(
       `/rooms/${roomObject.roomId}/room-objects/${roomObject.id}`,
       roomObject
     );
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [position, setPosition] = useState<{ x: number; y: number }>(
-    roomObject.position
-  );
+  const [matrix, setMatrix] = useState<DOMMatrix|null>(null)
+  const [roomObjectState, setRoomObjectState] = useState<RoomObject>(roomObject);
   useEffect(() => {
-    setPosition(roomObject.position);
-  }, [roomObject.position]);
-
-  const drag = () => {
-    setIsDragging(() => true);
-  };
-
-  const handleStop = (event: DraggableEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-    if (!isDragging) {
-      editRoomObject();
-    } else {
-      const mouseEvent = event as MouseEvent;
-      const position = translateClientPosition(mouseEvent.x, mouseEvent.y);
-      updateRoomObject({
-        ...roomObject,
-        position,
-      });
-      setPosition(position);
+    setRoomObjectState(roomObject);
+  }, [roomObject]);
+  const getPosition = (monitor: DragSourceMonitor) => {
+    if(!monitor.isDragging()){
+      return null
     }
-    setIsDragging(() => false);
-  };
+    const initialOffset = transformPosition(monitor.getInitialClientOffset()!, matrix!);
+    const clickOffset = addPositions(initialOffset,negatePosition(roomObjectState.position))
+    const movement = transformPosition(monitor.getClientOffset()!,matrix!)
+    const newPosition = addPositions(movement,negatePosition(clickOffset))
+
+    return newPosition
+  }
+  const [{position: dragPosition}, dragRef] = useDrag({
+    item: {
+      id: roomObject.id,
+      type: 'roomObject'
+    },
+    end: (comp:any, monitor:any) => {
+      const changedObj = {
+        ...roomObject,
+        position: getPosition(monitor)!
+      }
+      setRoomObjectState(changedObj)
+      updateRoomObject(changedObj)
+    },
+    begin: () => {
+      setMatrix(() => generateMatrix())
+    },
+    collect: (monitor: DragSourceMonitor) => ({
+      position: getPosition(monitor)
+    })
+  })
+  // const editRoomObject = () => {
+  //   if(!dragging){
+  //     router.push(`/room/${roomObject.roomId}/room-object/${roomObject.id}`);
+  //   }
+  // };
+
+  const position = dragPosition || roomObjectState.position
 
   return (
-    <Draggable
-      scale={scale}
-      onStop={handleStop}
-      onDrag={drag}
-      position={position}
-    >
-      <g>
-        <image
-          href={roomObject.imageUrl}
-          transform="translate(-1,-1)"
-          width="2"
-          height="2"
-        />
-        <circle
-          r="1"
-          fillOpacity="0"
-          strokeWidth="1px"
-          stroke="black"
-          vectorEffect="non-scaling-stroke"
-        />
+      <g 
+      ref={dragRef} 
+      transform={`translate(${position?.x},${position?.y})`}
+      >
+        <RoomObjectImage {...roomObjectState}/>
+        <title >{`${roomObject.title}`}</title>
       </g>
-    </Draggable>
   );
 };
 

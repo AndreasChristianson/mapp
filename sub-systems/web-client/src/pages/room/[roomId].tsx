@@ -30,6 +30,7 @@ const RoomPage: NextPage<Props> = ({
       setRoom(updatedRoom);
     });
     socket.on('roomObjectChanged', (updatedRoomObject: RoomObject) => {
+      console.log({updatedRoomObject})
       setRoomObjects((previousRoomObjects) => [
         ...previousRoomObjects.filter(({ id }) => id !== updatedRoomObject.id),
         updatedRoomObject,

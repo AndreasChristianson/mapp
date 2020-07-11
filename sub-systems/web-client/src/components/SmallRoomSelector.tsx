@@ -23,7 +23,7 @@ const Title = styled(Indented)`
 
 const Description = styled(Indented)``;
 
-const SmallRoomDisplay: FunctionComponent<Props> = ({ room }) => (
+const SmallRoomSelector: FunctionComponent<Props> = ({ room }) => (
   <GotoRoomLink room={room}>
     <Container>
       <Id>{room.id}</Id>
@@ -33,4 +33,4 @@ const SmallRoomDisplay: FunctionComponent<Props> = ({ room }) => (
   </GotoRoomLink>
 );
 
-export default SmallRoomDisplay;
+export default SmallRoomSelector;

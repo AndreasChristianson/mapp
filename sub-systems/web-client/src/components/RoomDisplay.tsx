@@ -3,6 +3,7 @@ import { RoomObject, Room } from '../../../types/types';
 import styled from 'styled-components';
 import RoomObjectDisplay from './RoomObjectDisplay';
 import { put } from '../utils/fetch-helpers';
+import { transformMouseEventPosition } from '../utils/svg-helpers';
 
 type Props = {
   roomObjects: RoomObject[];
@@ -16,48 +17,32 @@ const Svg = styled.svg`
 
 const RoomDisplay = ({ roomObjects, room }: Props) => {
   const svg = createRef<SVGSVGElement>();
-  const translatePosition = (x: number, y: number) => {
-    if (svg.current) {
-      const point: DOMPoint = svg.current.createSVGPoint();
-      point.x = x;
-      point.y = y;
-
-      const cursorPoint = point.matrixTransform(
-        svg.current.getScreenCTM()!.inverse()
-      );
-      return { x: cursorPoint.x, y: cursorPoint.y };
-    }
-    return { x: 0, y: 0 };
-  };
+  const getRootMatrix = () => svg.current!.getScreenCTM() as DOMMatrix;
   const createRoomObject = async (
     event: React.MouseEvent<SVGSVGElement, MouseEvent>
   ) => {
     event.preventDefault();
-    const position = translatePosition(event.clientX, event.clientY);
+    const rootMatrix = getRootMatrix();
+    
     await put(`/rooms/${room.id}/room-objects`, {
       title: 'new object',
-      position,
+      position: transformMouseEventPosition(event, rootMatrix),
       imageUrl: '',
     });
   };
-  const [scale, setScale] = useState(1);
-  useEffect(() => {
-    setScale(svg.current!.clientWidth / room.size);
-  }, [svg.current?.clientWidth]);
 
   return (
     <Svg
       viewBox={`0 0 ${room.size} ${room.size}`}
       ref={svg}
-      onContextMenu={createRoomObject}
+      // onContextMenu={createRoomObject}
     >
       <image href={room.imageUrl} x="0" y="0" width="100%" height="100%" />
       {roomObjects.map((roomObject) => (
         <RoomObjectDisplay
           key={roomObject.id}
           roomObject={roomObject}
-          scale={scale}
-          translateClientPosition={translatePosition}
+          generateMatrix={getRootMatrix}
         />
       ))}
     </Svg>

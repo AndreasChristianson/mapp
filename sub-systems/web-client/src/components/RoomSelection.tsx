@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import useSWR from 'swr';
 import { swrFetch } from '../utils/fetch-helpers';
 import { Room } from '../../../types/types';
-import SmallRoomDisplay from './SmallRoomDisplay';
+import SmallRoomSelector from './SmallRoomSelector';
 import CreateRoomButton from './CreateRoomButton';
 
 const List = styled.div`
@@ -31,9 +31,9 @@ const RoomSelection = () => {
       <ListItem>
         <CreateRoomButton />
       </ListItem>
-      {data.map((room) => (
+      {data.map((room:Room) => (
         <ListItem key={room.id}>
-          <SmallRoomDisplay room={room} />
+          <SmallRoomSelector room={room} />
         </ListItem>
       ))}
     </List>

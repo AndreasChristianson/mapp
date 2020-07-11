@@ -10,8 +10,6 @@ jest.mock('../components/Stats');
 jest.mock('../components/RoomSelection');
 
 describe('Index', () => {
-  const chance = new Chance();
-  let randomUserAgent: string;
   beforeEach(() => {
     const mockStats = Stats as jest.Mock;
     mockStats.mockReturnValue('stats component');
