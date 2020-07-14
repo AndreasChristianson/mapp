@@ -1,19 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { RoomObject } from '../../../types/types';
+import { RoomObject, Position} from '../../../types/types';
 import { useRouter } from 'next/router'
 import { put } from '../utils/fetch-helpers';
 import { useDrag, DragSourceMonitor} from 'react-dnd';
-import { transformPosition, addPositions, negatePosition } from '../utils/svg-helpers';
+import { calculateNewPosition } from '../utils/svg-helpers';
 import { RoomObjectImage } from './RoomObjectImage';
 
 type Props = {
   roomObject: RoomObject;
-  generateMatrix: () => DOMMatrix;
+  matrix?: DOMMatrix;
+};
+
+const calculateNewPositionIfDragging = (initialPosition: Position, monitor: DragSourceMonitor, matrix?: DOMMatrix) => {
+  if(!monitor.isDragging()){
+    return null
+  }
+
+  return calculateNewPosition(initialPosition, monitor, matrix!)
 };
 
 const RoomObjectDisplay = ({
   roomObject,
-  generateMatrix,
+  matrix,
 }: Props) => {
   const router = useRouter();
   const updateRoomObject = (roomObject: RoomObject) =>
@@ -21,22 +29,10 @@ const RoomObjectDisplay = ({
       `/rooms/${roomObject.roomId}/room-objects/${roomObject.id}`,
       roomObject
     );
-  const [matrix, setMatrix] = useState<DOMMatrix|null>(null)
   const [roomObjectState, setRoomObjectState] = useState<RoomObject>(roomObject);
   useEffect(() => {
     setRoomObjectState(roomObject);
   }, [roomObject]);
-  const getPosition = (monitor: DragSourceMonitor) => {
-    if(!monitor.isDragging()){
-      return null
-    }
-    const initialOffset = transformPosition(monitor.getInitialClientOffset()!, matrix!);
-    const clickOffset = addPositions(initialOffset,negatePosition(roomObjectState.position))
-    const movement = transformPosition(monitor.getClientOffset()!,matrix!)
-    const newPosition = addPositions(movement,negatePosition(clickOffset))
-
-    return newPosition
-  }
   const [{position: dragPosition}, dragRef] = useDrag({
     item: {
       id: roomObject.id,
@@ -45,16 +41,13 @@ const RoomObjectDisplay = ({
     end: (comp:any, monitor:any) => {
       const changedObj = {
         ...roomObject,
-        position: getPosition(monitor)!
+        position: calculateNewPosition(roomObjectState.position, monitor, matrix!)
       }
-      setRoomObjectState(changedObj)
       updateRoomObject(changedObj)
-    },
-    begin: () => {
-      setMatrix(() => generateMatrix())
+      setRoomObjectState(changedObj)
     },
     collect: (monitor: DragSourceMonitor) => ({
-      position: getPosition(monitor)
+      position: calculateNewPositionIfDragging(roomObjectState.position, monitor, matrix)
     })
   })
   // const editRoomObject = () => {

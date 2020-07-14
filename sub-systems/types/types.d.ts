@@ -1,10 +1,7 @@
 export interface RoomObject {
   id: string
   roomId: string
-  position: {
-    x: number
-    y: number
-  }
+  position: Position
   imageUrl: string
   title: string
 }
@@ -15,4 +12,9 @@ export interface Room {
   title: string
   imageUrl: string
   size: number
+}
+
+export interface Position {
+  x: number
+  y: number
 }

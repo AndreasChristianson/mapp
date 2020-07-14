@@ -1,4 +1,4 @@
-import React, { createRef, useEffect, useState, useLayoutEffect } from 'react';
+import React, { createRef, useEffect, useState} from 'react';
 import { RoomObject, Room } from '../../../types/types';
 import styled from 'styled-components';
 import RoomObjectDisplay from './RoomObjectDisplay';
@@ -17,6 +17,7 @@ const Svg = styled.svg`
 
 const RoomDisplay = ({ roomObjects, room }: Props) => {
   const svg = createRef<SVGSVGElement>();
+  const [matrix, setMatrix] = useState<DOMMatrix>(); 
   const getRootMatrix = () => svg.current!.getScreenCTM() as DOMMatrix;
   const createRoomObject = async (
     event: React.MouseEvent<SVGSVGElement, MouseEvent>
@@ -31,6 +32,10 @@ const RoomDisplay = ({ roomObjects, room }: Props) => {
     });
   };
 
+  useEffect(() => {
+    setMatrix(svg.current!.getScreenCTM()!);
+  }, []);
+
   return (
     <Svg
       viewBox={`0 0 ${room.size} ${room.size}`}
@@ -42,7 +47,7 @@ const RoomDisplay = ({ roomObjects, room }: Props) => {
         <RoomObjectDisplay
           key={roomObject.id}
           roomObject={roomObject}
-          generateMatrix={getRootMatrix}
+          matrix={matrix}
         />
       ))}
     </Svg>

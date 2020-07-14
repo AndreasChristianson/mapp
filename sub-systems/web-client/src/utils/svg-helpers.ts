@@ -1,3 +1,6 @@
+import { DragSourceMonitor } from "react-dnd";
+import {Position} from '../../../types/types'
+
 export const transformMouseEventPosition = (event: React.MouseEvent<SVGSVGElement, MouseEvent>, matrix: DOMMatrix) =>
   transformPosition({ x: event.clientX, y: event.clientY }, matrix);
 
@@ -17,3 +20,12 @@ export const negatePosition = ({ x, y }: { x: number, y: number }) => ({
   x: -1 * x,
   y: -1 * y
 })
+
+export const calculateNewPosition = (initialPosition: Position, monitor: DragSourceMonitor, matrix: DOMMatrix) => {
+  const initialOffset = transformPosition(monitor.getInitialClientOffset()!, matrix!);
+  const clickOffset = addPositions(initialOffset, negatePosition(initialPosition))
+  const movement = transformPosition(monitor.getClientOffset()!, matrix!)
+  const newPosition = addPositions(movement, negatePosition(clickOffset))
+
+  return newPosition
+};
